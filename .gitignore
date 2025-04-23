@@ -1,0 +1,45 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Environment variable files
+.env.local
+.env.*.local
+
+# Keep the example .env since it's part of the repo
+# .env
+
+# Logs
+*.log
+logs/
+
+# Docker volumes
+data/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Mac OS
+.DS_Store
+
+# Other
+.pytest_cache/
+.coverage
+htmlcov/
