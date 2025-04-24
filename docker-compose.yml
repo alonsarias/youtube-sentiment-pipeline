@@ -25,3 +25,26 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  hbase:
+    image: harisekhon/hbase:1.4
+    platform: linux/amd64  # This image doesn't need platform specification as it works with emulation
+    container_name: hbase
+    ports:
+      - "16000:16000"   # HBase Master
+      - "16010:16010"   # HBase Master Web UI
+      - "16020:16020"   # HBase Regionserver
+      - "16030:16030"   # HBase Regionserver Web UI
+      - "9090:9090"     # Thrift API
+      - "8085:8085"     # REST API
+    environment:
+      - HBASE_MANAGES_ZK=false
+      - HBASE_ZOOKEEPER_QUORUM=zookeeper
+    depends_on:
+      - zookeeper
+    volumes:
+      - hbase_data:/hbase-data
+
+volumes:
+  hbase_data:
+    driver: local
