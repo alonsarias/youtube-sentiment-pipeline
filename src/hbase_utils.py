@@ -52,7 +52,7 @@ def store_comment(connection, row_key, data):
         f"{HBASE_COLUMN_FAMILY}:timestamp": str(int(time.time())).encode('utf-8'),
         f"{HBASE_COLUMN_FAMILY}:user_id": data['user_id'].encode('utf-8'),
         f"{HBASE_COLUMN_FAMILY}:comment": data['comment'].encode('utf-8'),
-        f"{HBASE_COLUMN_FAMILY}:processed": "False".encode('utf-8')
+        f"{HBASE_COLUMN_FAMILY}:processed": b"False"
     }
 
     # Store in HBase
