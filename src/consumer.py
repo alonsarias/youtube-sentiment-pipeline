@@ -4,6 +4,7 @@ import uuid
 import time
 from config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_TOPIC
 from hbase_utils import get_connection, create_table_if_not_exists, store_comment
+from sentiment_processor import SentimentProcessor
 
 def create_consumer():
     return KafkaConsumer(
@@ -20,6 +21,10 @@ def main():
     hbase_connection = get_connection()
     create_table_if_not_exists(hbase_connection)
 
+    # Initialize sentiment processor
+    print("Initializing sentiment processor...")
+    sentiment_processor = SentimentProcessor()
+
     # Set up Kafka consumer
     consumer = create_consumer()
     try:
@@ -34,6 +39,15 @@ def main():
             # Store in HBase
             store_comment(hbase_connection, row_key, data)
             print(f"Stored comment in HBase with row key: {row_key}")
+
+            # Process sentiment
+            comment_text = data['comment']
+            sentiment = sentiment_processor.process_comment(
+                hbase_connection,
+                row_key,
+                comment_text
+            )
+            print(f"Sentiment analysis for comment: '{comment_text}' → {sentiment}")
 
     except KeyboardInterrupt:
         print("\nStopping consumer...")

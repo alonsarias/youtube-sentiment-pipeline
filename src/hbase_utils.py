@@ -57,3 +57,46 @@ def store_comment(connection, row_key, data):
 
     # Store in HBase
     table.put(row_key.encode('utf-8'), mapped_data)
+
+def update_comment_with_sentiment(connection, row_key, sentiment):
+    """Update a comment in HBase with sentiment analysis results.
+
+    Args:
+        connection: HBase connection
+        row_key: Unique identifier for the row
+        sentiment: String containing the sentiment label
+    """
+    table = connection.table(HBASE_TABLE_NAME)
+
+    # Convert values to bytes for HBase storage
+    mapped_data = {
+        f"{HBASE_COLUMN_FAMILY}:sentiment": sentiment.encode('utf-8'),
+        f"{HBASE_COLUMN_FAMILY}:processed": b"True",
+        f"{HBASE_COLUMN_FAMILY}:processed_timestamp": str(int(time.time())).encode('utf-8')
+    }
+
+    # Update in HBase
+    table.put(row_key.encode('utf-8'), mapped_data)
+
+def get_comment(connection, row_key):
+    """Retrieve a comment from HBase table.
+
+    Args:
+        connection: HBase connection
+        row_key: Unique identifier for the row
+
+    Returns:
+        dict: Dictionary containing the comment data
+    """
+    table = connection.table(HBASE_TABLE_NAME)
+
+    # Get the row data
+    row = table.row(row_key.encode('utf-8'))
+
+    # Convert bytes back to strings
+    result = {}
+    for key, value in row.items():
+        column_name = key.decode('utf-8').split(':')[1]
+        result[column_name] = value.decode('utf-8')
+
+    return result
