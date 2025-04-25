@@ -1,17 +1,20 @@
 # Sentiment Analysis Big Data Simulation
 
-A real-time sentiment analysis pipeline using Kafka and HBase, optimized for Mac M1/Apple Silicon.
+A real-time sentiment analysis pipeline using Kafka, HBase, MySQL, and Metabase for visualization, optimized for Mac M1/Apple Silicon.
 
 ## Project Structure
 ```
 .
-├── docker-compose.yml    # Kafka, Zookeeper, and HBase services
+├── docker-compose.yml    # Kafka, Zookeeper, HBase, MySQL, and Metabase services
 ├── .env                 # Environment variables
 ├── requirements.txt     # Python dependencies
 └── src/
     ├── config.py       # Configuration module
     ├── producer.py     # Kafka producer for comment simulation
     ├── consumer.py     # Kafka consumer that stores in HBase
+    ├── mysql_client.py # MySQL client for storing sentiment analysis results
+    ├── sentiment_analyzer.py # Sentiment analysis module
+    ├── sentiment_processor.py # Processes and routes sentiment analysis
     └── hbase_utils.py  # HBase utility functions
 ```
 
@@ -19,6 +22,8 @@ A real-time sentiment analysis pipeline using Kafka and HBase, optimized for Mac
 
 - Real-time comment streaming simulation using Kafka
 - HBase storage for raw comments with configurable schema
+- MySQL storage for sentiment analysis results
+- Metabase for visualizing sentiment analysis data
 - M1/ARM64 compatible Docker setup
 - Configurable environment for local development
 
@@ -42,7 +47,7 @@ A real-time sentiment analysis pipeline using Kafka and HBase, optimized for Mac
    pip install -r requirements.txt
    ```
 
-3. Start Kafka, Zookeeper, and HBase:
+3. Start Kafka, Zookeeper, HBase, MySQL, and Metabase:
    ```bash
    docker-compose up -d
    ```
@@ -113,3 +118,36 @@ The following environment variables can be configured in `.env`:
 - `HBASE_PORT`: HBase Thrift API port
 - `HBASE_TABLE_NAME`: Table to store comments
 - `HBASE_COLUMN_FAMILY`: Column family for comments data
+- `MYSQL_HOST`: MySQL host address
+- `MYSQL_PORT`: MySQL port
+- `MYSQL_DATABASE`: MySQL database name
+- `MYSQL_USER`: MySQL username
+- `MYSQL_PASSWORD`: MySQL password
+
+## Metabase Dashboard
+
+This project includes Metabase for visualizing the sentiment analysis results stored in MySQL.
+
+### Accessing Metabase
+
+1. After starting the services with `docker-compose up -d`, wait for Metabase to initialize (this may take a minute or two)
+2. Access the Metabase UI at http://localhost:3000
+3. Follow the setup wizard to create your admin account
+4. When prompted to add your data source, select MySQL with these settings:
+   - Name: Sentiment Analysis
+   - Host: mysql
+   - Port: 3306
+   - Database name: sentiment_analysis
+   - Username: user
+   - Password: password
+
+### Creating Dashboards
+
+Once connected, you can create dashboards to visualize your sentiment analysis data:
+
+1. Create a new question to query your data
+2. Example queries:
+   - Distribution of sentiment predictions over time
+   - Sentiment trends by user
+   - Volume of comments by sentiment category
+3. Add visualizations to a dashboard for a complete view of your sentiment analysis results

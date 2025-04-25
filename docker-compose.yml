@@ -56,11 +56,27 @@ services:
       MYSQL_DATABASE: sentiment_analysis
       MYSQL_USER: user
       MYSQL_PASSWORD: password
+      # Adding auth_plugin configuration to fix RSA public key error
+      MYSQL_INITDB_ARGS: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password
     volumes:
       - mysql_data:/var/lib/mysql
+
+  metabase:
+    image: metabase/metabase:latest
+    platform: linux/amd64  # This image doesn't need platform specification as it works with emulation
+    container_name: metabase
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mysql
+    volumes:
+      - metabase_data:/metabase-data
 
 volumes:
   hbase_data:
     driver: local
   mysql_data:
+    driver: local
+  metabase_data:
     driver: local

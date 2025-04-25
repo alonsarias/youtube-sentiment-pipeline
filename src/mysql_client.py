@@ -15,7 +15,8 @@ def get_connection():
                 port=MYSQL_PORT,
                 database=MYSQL_DATABASE,
                 user=MYSQL_USER,
-                password=MYSQL_PASSWORD
+                password=MYSQL_PASSWORD,
+                auth_plugin='mysql_native_password'  # Added auth_plugin to fix RSA public key error
             )
             print(f"Successfully connected to MySQL at {MYSQL_HOST}:{MYSQL_PORT}")
             return connection
