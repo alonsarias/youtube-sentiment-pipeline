@@ -3,3 +3,4 @@ python-dotenv
 happybase
 torch
 transformers
+mysql-connector-python

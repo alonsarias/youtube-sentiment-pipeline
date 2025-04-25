@@ -45,6 +45,22 @@ services:
     volumes:
       - hbase_data:/hbase-data
 
+  mysql:
+    image: arm64v8/mysql:8.0
+    platform: linux/arm64  # For Mac M1 compatibility
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: sentiment_analysis
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql_data:/var/lib/mysql
+
 volumes:
   hbase_data:
+    driver: local
+  mysql_data:
     driver: local
