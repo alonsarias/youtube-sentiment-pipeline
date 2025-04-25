@@ -1,5 +1,6 @@
 import mysql.connector
 import time
+import datetime
 from config import MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
 
 def get_connection():
@@ -39,7 +40,7 @@ def create_tables_if_not_exist(connection):
             id VARCHAR(36) PRIMARY KEY,
             user_id VARCHAR(255) NOT NULL,
             comment TEXT NOT NULL,
-            timestamp BIGINT NOT NULL,
+            timestamp DATETIME NOT NULL,
             sentiment_prediction VARCHAR(50) NOT NULL
         )
         """)
@@ -61,18 +62,21 @@ def insert_sentiment_data(connection, comment_id, user_id, comment_text, timesta
         comment_id: Unique identifier for the comment
         user_id: User identifier
         comment_text: Comment text content
-        timestamp: Unix timestamp
+        timestamp: Unix timestamp (milliseconds)
         sentiment: Sentiment prediction label
     """
     try:
         cursor = connection.cursor()
+
+        # Convert Unix timestamp (milliseconds) to datetime object
+        datetime_obj = datetime.datetime.fromtimestamp(timestamp / 1000.0)
 
         query = """
         INSERT INTO comments (id, user_id, comment, timestamp, sentiment_prediction)
         VALUES (%s, %s, %s, %s, %s)
         """
 
-        cursor.execute(query, (comment_id, user_id, comment_text, timestamp, sentiment))
+        cursor.execute(query, (comment_id, user_id, comment_text, datetime_obj, sentiment))
         connection.commit()
 
         print(f"Inserted sentiment data into MySQL: {comment_id}, sentiment: {sentiment}")
