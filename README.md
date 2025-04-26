@@ -296,6 +296,7 @@ sentiment-analysis-big-data-simulation/
 ├── docker-compose.yml        # Docker services configuration
 ├── README.md                 # Project documentation
 ├── requirements.txt          # Python dependencies
+├── .env                      # Environment variables configuration
 ├── data/
 │   └── comments.json         # Sample comment data for producer
 ├── images/                   # Visualization and diagram assets
@@ -318,6 +319,8 @@ sentiment-analysis-big-data-simulation/
 - **Root Directory**: Contains project-level configuration files and documentation
   - `docker-compose.yml`: Defines and configures all Docker services needed for the project
   - `requirements.txt`: Lists Python dependencies needed for the application components
+  - `.env`: Environment variables configuration file for all services and components
+  - `README.md`: Project documentation with setup instructions and component explanations
 
 - **data/**: Contains input data files
   - `comments.json`: Sample comment dataset used by the producer to simulate user comments
