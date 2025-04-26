@@ -389,14 +389,18 @@ This visualization shows how sentiment trends change over time.
 *Figure 2: Time series showing sentiment trends over time. Peaks in positive sentiment correlate with product launches and promotional events.*
 
 1. In Metabase, click on "New" > "Question"
-2. Select "MySQL" as the data source
-3. Choose the "comments" table
-4. Click on "Visualization" and select "Line"
-5. Configure the chart:
-   - X-axis: Select "timestamp" field (you may want to group by hour, day, or week depending on your data volume)
-   - Y-axis: Select "Count" as the aggregation method
-   - Group by: Select "sentiment_prediction" to see different sentiment categories as separate lines
-6. Click "Save" and add it to your dashboard
+2. In the top navigation, select your database (e.g., "Sentiment Analysis Big Data Simulation")
+3. Click on "Comments" table
+4. Click on the "Summarize" button
+5. For "Pick a function or metric", select "Count of rows"
+6. For "Pick a column to group by", select "timestamp"
+7. You can refine the time grouping by clicking on "by month" and changing to hour, day, or week
+8. Click "+ Add another grouping"
+9. Select "sentiment_prediction" to break down data by sentiment categories
+10. Click "Visualize" button at the bottom
+11. Click "Line" in the visualization selector
+12. Use the "Settings" panel to customize colors and display options
+13. Click "Save" and add it to your dashboard
 
 ##### Example 2: Bar Chart - Sentiment Category Distribution
 
@@ -406,13 +410,15 @@ This visualization shows the count of comments in each sentiment category.
 *Figure 3: Bar chart showing the distribution of sentiment categories. This sample shows a healthy distribution across the five sentiment levels from Very Negative to Very Positive.*
 
 1. In Metabase, click on "New" > "Question"
-2. Select "MySQL" as the data source
-3. Choose the "comments" table
-4. Click on "Visualization" and select "Bar"
-5. Configure the chart:
-   - X-axis: Select "sentiment_prediction" field
-   - Y-axis: Select "Count" as the aggregation method
-6. Click "Save" and add it to your dashboard
+2. In the top navigation, select your database (e.g., "Sentiment Analysis Big Data Simulation")
+3. Click on "Comments" table
+4. Click on the "Summarize" button
+5. For "Pick a function or metric", select "Count of rows"
+6. For "Pick a column to group by", select "sentiment_prediction"
+7. Click "Visualize" button at the bottom
+8. Click "Bar" in the visualization selector
+9. Use the "Settings" panel to customize colors, axis labels, and display options
+10. Click "Save" and add it to your dashboard
 
 ##### Example 3: Pie Chart - Sentiment Distribution Percentage
 
@@ -422,14 +428,16 @@ This visualization shows the proportion of each sentiment category as a percenta
 *Figure 4: Pie chart showing the percentage distribution of the five sentiment categories (Very Negative, Negative, Neutral, Positive, Very Positive), providing a quick overview of overall customer sentiment.*
 
 1. In Metabase, click on "New" > "Question"
-2. Select "MySQL" as the data source
-3. Choose the "comments" table
-4. Click on "Visualization" and select "Pie"
-5. Configure the chart:
-   - Select "sentiment_prediction" as the dimension to group by
-   - Select "Count" as the aggregation method
-6. Click "Settings" and enable "Show percentage" option
-7. Click "Save" and add it to your dashboard
+2. In the top navigation, select your database (e.g., "Sentiment Analysis Big Data Simulation")
+3. Click on "Comments" table
+4. Click on the "Summarize" button
+5. For "Pick a function or metric", select "Count of rows"
+6. For "Pick a column to group by", select "sentiment_prediction"
+7. Click "Visualize" button at the bottom
+8. Click "Pie" in the visualization selector
+9. In the "Settings" panel, enable "Show percentage" option
+10. Optionally, customize colors and legend position
+11. Click "Save" and add it to your dashboard
 
 ### Step 5: Shutdown
 
