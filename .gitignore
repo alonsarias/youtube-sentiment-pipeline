@@ -1,45 +1,70 @@
-# Python bytecode
+# --------------------------------------
+# Python bytecode and compilation artifacts
+# --------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Distribution / packaging
+# --------------------------------------
+# Distribution / packaging artifacts
+# --------------------------------------
 dist/
 build/
 *.egg-info/
 
+# --------------------------------------
 # Virtual environments
+# --------------------------------------
 venv/
 env/
 ENV/
 
-# IDE specific files
-.idea/
+# --------------------------------------
+# IDE and editor specific files
+# --------------------------------------
+# Visual Studio Code
 .vscode/
+# JetBrains IDEs (PyCharm, etc.)
+.idea/
+# Sublime Text
 *.sublime-project
 *.sublime-workspace
 
-# Environment variable files
+# --------------------------------------
+# Local configuration and secrets
+# --------------------------------------
+# Environment variable files (except the example .env)
 .env.local
 .env.*.local
 
 # Keep the example .env since it's part of the repo
 # .env
 
-# Logs
+# --------------------------------------
+# Logs and debug files
+# --------------------------------------
 *.log
 logs/
 
-# Docker volumes
+# --------------------------------------
+# Data storage (Docker volumes, etc.)
+# --------------------------------------
 data/
 
-# Jupyter Notebook
+# --------------------------------------
+# Jupyter Notebook artifacts
+# --------------------------------------
 .ipynb_checkpoints
 
-# Mac OS
+# --------------------------------------
+# Operating system files
+# --------------------------------------
+# macOS
 .DS_Store
 
-# Other
+# --------------------------------------
+# Testing artifacts
+# --------------------------------------
 .pytest_cache/
 .coverage
 htmlcov/

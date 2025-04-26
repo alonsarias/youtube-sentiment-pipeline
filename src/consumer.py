@@ -8,6 +8,12 @@ from mysql_client import get_connection as get_mysql_connection, create_tables_i
 from sentiment_processor import SentimentProcessor
 
 def create_consumer():
+    """
+    Create and configure a Kafka consumer.
+
+    Returns:
+        KafkaConsumer: Configured Kafka consumer instance
+    """
     return KafkaConsumer(
         KafkaConfig.TOPIC,
         bootstrap_servers=KafkaConfig.BOOTSTRAP_SERVERS,
@@ -17,12 +23,18 @@ def create_consumer():
     )
 
 def main():
-    # Set up HBase
+    """
+    Main function that initializes components and processes messages from Kafka.
+
+    This function establishes connections to databases, sets up the sentiment
+    processor, and consumes messages from Kafka for sentiment analysis.
+    """
+    # Set up HBase connection
     logger.info("Initializing HBase connection...")
     hbase_connection = get_hbase_connection()
     create_hbase_table(hbase_connection)
 
-    # Set up MySQL
+    # Set up MySQL connection
     logger.info("Initializing MySQL connection...")
     mysql_connection = get_mysql_connection()
     create_mysql_tables(mysql_connection)
@@ -44,11 +56,11 @@ def main():
             unique_id = uuid.uuid4().hex[:8]
             row_key = f"{current_timestamp}-{unique_id}"
 
-            # Store in HBase
+            # Store raw comment in HBase
             store_comment(hbase_connection, row_key, data)
             logger.info(f"Stored comment in HBase with row key: {row_key}")
 
-            # Process sentiment
+            # Process sentiment analysis
             comment_text = data['comment']
             user_id = data['user_id']
             sentiment = sentiment_processor.process_comment(
@@ -58,7 +70,7 @@ def main():
             )
             logger.info(f"Sentiment analysis for comment: '{comment_text}' → {sentiment}")
 
-            # Store in MySQL
+            # Store sentiment results in MySQL for analysis and visualization
             try:
                 insert_sentiment_data(
                     mysql_connection,
@@ -77,6 +89,7 @@ def main():
     except Exception as e:
         logger.error(f"Unexpected error in consumer: {e}")
     finally:
+        # Clean up resources
         consumer.close()
         hbase_connection.close()
         mysql_connection.close()

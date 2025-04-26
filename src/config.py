@@ -3,6 +3,7 @@ Configuration module for the Sentiment Analysis Big Data Simulation.
 
 This module loads configuration from environment variables and provides
 structured access to all configurable parameters used throughout the application.
+Default values are provided when environment variables are not set.
 """
 from dotenv import load_dotenv
 import os
@@ -64,6 +65,7 @@ class SentimentConfig:
     """Configuration for sentiment analysis model and processing."""
     MODEL_NAME = os.getenv('SENTIMENT_MODEL_NAME', 'tabularisai/multilingual-sentiment-analysis')
     MAX_LENGTH = int(os.getenv('SENTIMENT_MAX_LENGTH', 512))
+    # Map model outputs (integers) to human-readable sentiment labels
     SENTIMENT_MAP = {
         0: "Very Negative",
         1: "Negative",
@@ -79,6 +81,7 @@ class AppConfig:
     """General application settings."""
     PRODUCER_MIN_DELAY = float(os.getenv('PRODUCER_MIN_DELAY', 0.5))
     PRODUCER_MAX_DELAY = float(os.getenv('PRODUCER_MAX_DELAY', 3.0))
+    # Construct absolute path to comments file based on project structure
     COMMENTS_FILE_PATH = os.getenv('COMMENTS_FILE_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'comments.json'))
 
 # For backward compatibility, maintain the original constants at the module level

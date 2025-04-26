@@ -3,8 +3,15 @@ import time
 from config import HBaseConfig, logger
 
 def get_connection():
-    """Create and return a connection to HBase."""
-    # Add retry mechanism for Docker container startup timing
+    """
+    Create and return a connection to HBase with retry mechanism.
+
+    Returns:
+        happybase.Connection: Active HBase connection
+
+    Raises:
+        Exception: If connection fails after max retries
+    """
     max_retries = HBaseConfig.MAX_RETRIES
     retry_delay = HBaseConfig.RETRY_DELAY
 
@@ -22,28 +29,33 @@ def get_connection():
                 raise
 
 def create_table_if_not_exists(connection):
-    """Create the HBase table if it doesn't exist."""
+    """
+    Create the HBase table if it doesn't exist.
+
+    Args:
+        connection (happybase.Connection): Active HBase connection
+    """
     tables = connection.tables()
     tables = [t.decode('utf-8') for t in tables]  # Convert bytes to strings
 
     if HBaseConfig.TABLE_NAME not in tables:
         logger.info(f"Creating table: {HBaseConfig.TABLE_NAME}")
-        # Create a table with one column family
         connection.create_table(
             HBaseConfig.TABLE_NAME,
-            {HBaseConfig.COLUMN_FAMILY: dict()}  # Default settings for column family
+            {HBaseConfig.COLUMN_FAMILY: dict()}
         )
         logger.info(f"Table {HBaseConfig.TABLE_NAME} created successfully")
     else:
         logger.info(f"Table {HBaseConfig.TABLE_NAME} already exists")
 
 def store_comment(connection, row_key, data):
-    """Store a comment in HBase table.
+    """
+    Store a comment in HBase table.
 
     Args:
-        connection: HBase connection
-        row_key: Unique identifier for the row
-        data: Dict containing comment data
+        connection (happybase.Connection): Active HBase connection
+        row_key (str): Unique identifier for the row
+        data (dict): Dictionary containing at minimum 'user_id' and 'comment' keys
     """
     table = connection.table(HBaseConfig.TABLE_NAME)
 
@@ -55,38 +67,37 @@ def store_comment(connection, row_key, data):
         f"{HBaseConfig.COLUMN_FAMILY}:processed": b"False"
     }
 
-    # Store in HBase
     table.put(row_key.encode('utf-8'), mapped_data)
 
 def update_comment_with_sentiment(connection, row_key, sentiment):
-    """Update a comment in HBase with sentiment analysis results.
+    """
+    Update a comment in HBase with sentiment analysis results.
 
     Args:
-        connection: HBase connection
-        row_key: Unique identifier for the row
-        sentiment: String containing the sentiment label
+        connection (happybase.Connection): Active HBase connection
+        row_key (str): Unique identifier for the row
+        sentiment (str): Sentiment label determined by the analysis
     """
     table = connection.table(HBaseConfig.TABLE_NAME)
 
-    # Convert values to bytes for HBase storage
     mapped_data = {
         f"{HBaseConfig.COLUMN_FAMILY}:sentiment": sentiment.encode('utf-8'),
         f"{HBaseConfig.COLUMN_FAMILY}:processed": b"True",
         f"{HBaseConfig.COLUMN_FAMILY}:processed_timestamp": str(int(time.time())).encode('utf-8')
     }
 
-    # Update in HBase
     table.put(row_key.encode('utf-8'), mapped_data)
 
 def get_comment(connection, row_key):
-    """Retrieve a comment from HBase table.
+    """
+    Retrieve a comment from HBase table.
 
     Args:
-        connection: HBase connection
-        row_key: Unique identifier for the row
+        connection (happybase.Connection): Active HBase connection
+        row_key (str): Unique identifier for the row
 
     Returns:
-        dict: Dictionary containing the comment data
+        dict: Dictionary containing the comment data with decoded string values
     """
     table = connection.table(HBaseConfig.TABLE_NAME)
 

@@ -3,7 +3,12 @@ from hbase_utils import update_comment_with_sentiment, get_comment
 from config import logger
 
 class SentimentProcessor:
-    """Process comments and perform sentiment analysis."""
+    """
+    Processes comments by performing sentiment analysis and updating storage.
+
+    This class serves as the orchestration layer between the sentiment analyzer
+    and data storage components.
+    """
 
     def __init__(self):
         """Initialize the sentiment processor with a sentiment analyzer."""
@@ -11,15 +16,19 @@ class SentimentProcessor:
         logger.info("Sentiment processor initialized")
 
     def process_comment(self, connection, row_key, comment_text=None):
-        """Process a comment by performing sentiment analysis and updating HBase.
+        """
+        Process a comment by performing sentiment analysis and updating HBase.
+
+        This method either uses the provided comment text or retrieves it from HBase,
+        performs sentiment analysis, and stores the result back in HBase.
 
         Args:
             connection: HBase connection
-            row_key: Unique identifier for the row
-            comment_text: Optional comment text. If None, will fetch from HBase.
+            row_key (str): Unique identifier for the row
+            comment_text (str, optional): Comment text to analyze. If None, will fetch from HBase.
 
         Returns:
-            str: The sentiment label
+            str: The sentiment label or None if processing failed
         """
         # If comment text is not provided, fetch it from HBase
         if comment_text is None:
@@ -27,7 +36,7 @@ class SentimentProcessor:
             comment_text = comment_data.get('comment')
 
         if not comment_text:
-            logger.warning(f"Warning: No comment text found for row_key: {row_key}")
+            logger.warning(f"No comment text found for row_key: {row_key}")
             return None
 
         # Perform sentiment analysis

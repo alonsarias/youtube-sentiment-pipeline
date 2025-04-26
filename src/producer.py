@@ -19,7 +19,7 @@ def load_comments(file_path):
 
     Raises:
         FileNotFoundError: If the comments file doesn't exist
-        json.JSONDecodeError: If the file isn't valid JSON
+        json.JSONDecodeError: If the file contains invalid JSON
         ValueError: If the file doesn't contain a list of strings
     """
     try:
@@ -49,20 +49,43 @@ def load_comments(file_path):
         raise
 
 def create_producer():
+    """
+    Create and configure a Kafka producer.
+
+    Returns:
+        KafkaProducer: Configured Kafka producer instance
+    """
     return KafkaProducer(
         bootstrap_servers=KafkaConfig.BOOTSTRAP_SERVERS,
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
 
 def send_message(producer, message):
+    """
+    Send a message to the Kafka topic with error handling.
+
+    Args:
+        producer (KafkaProducer): Kafka producer instance
+        message (dict): Message to be sent to Kafka
+    """
     future = producer.send(KafkaConfig.TOPIC, message)
     try:
+        # Block until the message is sent or times out
         future.get(timeout=KafkaConfig.PRODUCER_TIMEOUT)
         logger.info(f"Message sent successfully: {message}")
     except Exception as e:
         logger.error(f"Error sending message: {e}")
 
 def generate_comment(comments):
+    """
+    Generate a comment with user information for simulating real-time data.
+
+    Args:
+        comments (list): List of available comment strings
+
+    Returns:
+        dict: Dictionary containing user_id and comment text
+    """
     # Select a random comment from the loaded list
     comment = random.choice(comments)
     # Generate a random user ID
@@ -74,6 +97,7 @@ def generate_comment(comments):
     }
 
 def main():
+    """Main function to run the Kafka producer simulation."""
     try:
         # Use the configurable path for the comments file
         comments_file = AppConfig.COMMENTS_FILE_PATH
@@ -89,7 +113,7 @@ def main():
             while True:
                 message = generate_comment(comments)
                 send_message(producer, message)
-                # Random delay between min and max delay
+                # Random delay between min and max delay to simulate varying load
                 delay = random.uniform(AppConfig.PRODUCER_MIN_DELAY, AppConfig.PRODUCER_MAX_DELAY)
                 time.sleep(delay)
         except KeyboardInterrupt:

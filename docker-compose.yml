@@ -1,53 +1,71 @@
 version: '3'
 services:
+  # ----------------------------------------
+  # Apache ZooKeeper
+  # Distributed coordination service used by Kafka and HBase
+  # ----------------------------------------
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
-    platform: linux/arm64  # For Mac M1 compatibility
+    platform: linux/arm64  # For Mac M1/Apple Silicon compatibility
     container_name: zookeeper
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_CLIENT_PORT: 2181  # Port clients connect to
+      ZOOKEEPER_TICK_TIME: 2000    # Milliseconds per tick for heartbeats
     ports:
       - "2181:2181"
 
+  # ----------------------------------------
+  # Apache Kafka
+  # Distributed event streaming platform for real-time data pipelines
+  # ----------------------------------------
   kafka:
     image: confluentinc/cp-kafka:7.4.0
-    platform: linux/arm64  # For Mac M1 compatibility
+    platform: linux/arm64  # For Mac M1/Apple Silicon compatibility
     container_name: kafka
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"
+      - "9092:9092"  # External client access port
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Security protocol mappings for different listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      # Internal (container-to-container) and external (host-to-container) listeners
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1  # Single broker setup
 
+  # ----------------------------------------
+  # Apache HBase
+  # Distributed NoSQL database for storing raw comments data
+  # ----------------------------------------
   hbase:
     image: harisekhon/hbase:1.4
-    platform: linux/amd64  # This image doesn't need platform specification as it works with emulation
+    platform: linux/amd64  # Uses emulation on M1/ARM64 - performance impact acceptable for development
     container_name: hbase
     ports:
-      - "16000:16000"   # HBase Master
+      - "16000:16000"   # HBase Master port
       - "16010:16010"   # HBase Master Web UI
-      - "16020:16020"   # HBase Regionserver
+      - "16020:16020"   # HBase Regionserver port
       - "16030:16030"   # HBase Regionserver Web UI
-      - "9090:9090"     # Thrift API
+      - "9090:9090"     # Thrift API - used by Python client
       - "8085:8085"     # REST API
     environment:
-      - HBASE_MANAGES_ZK=false
+      - HBASE_MANAGES_ZK=false  # Use external ZooKeeper instance
       - HBASE_ZOOKEEPER_QUORUM=zookeeper
     depends_on:
       - zookeeper
     volumes:
-      - hbase_data:/hbase-data
+      - hbase_data:/hbase-data  # Persist data between container restarts
 
+  # ----------------------------------------
+  # MySQL
+  # Relational database for storing processed sentiment analysis results
+  # ----------------------------------------
   mysql:
     image: arm64v8/mysql:8.0
-    platform: linux/arm64  # For Mac M1 compatibility
+    platform: linux/arm64  # Native ARM64 image for Mac M1/Apple Silicon
     container_name: mysql
     ports:
       - "3306:3306"
@@ -56,23 +74,30 @@ services:
       MYSQL_DATABASE: sentiment_analysis
       MYSQL_USER: user
       MYSQL_PASSWORD: password
-      # Adding auth_plugin configuration to fix RSA public key error
+      # Configure authentication to avoid RSA public key issues
       MYSQL_INITDB_ARGS: --default-authentication-plugin=mysql_native_password
     command: --default-authentication-plugin=mysql_native_password
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql  # Persist data between container restarts
 
+  # ----------------------------------------
+  # Metabase
+  # Data visualization and dashboarding platform for sentiment analysis results
+  # ----------------------------------------
   metabase:
     image: metabase/metabase:latest
-    platform: linux/amd64  # This image doesn't need platform specification as it works with emulation
+    platform: linux/amd64  # Uses emulation on M1/ARM64 - performance impact acceptable for dashboarding
     container_name: metabase
     ports:
-      - "3000:3000"
+      - "3000:3000"  # Web UI access port
     depends_on:
       - mysql
     volumes:
-      - metabase_data:/metabase-data
+      - metabase_data:/metabase-data  # Persist dashboards and settings
 
+# ----------------------------------------
+# Persistent storage volumes
+# ----------------------------------------
 volumes:
   hbase_data:
     driver: local

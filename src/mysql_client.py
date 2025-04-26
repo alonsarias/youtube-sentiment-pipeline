@@ -4,7 +4,15 @@ import datetime
 from config import MySQLConfig, logger
 
 def get_connection():
-    """Create and return a connection to MySQL."""
+    """
+    Create and return a connection to MySQL with retry mechanism.
+
+    Returns:
+        mysql.connector.connection.MySQLConnection: Active MySQL connection
+
+    Raises:
+        Exception: If connection fails after maximum retries
+    """
     # Add retry mechanism for Docker container startup timing
     max_retries = MySQLConfig.MAX_RETRIES
     retry_delay = MySQLConfig.RETRY_DELAY
@@ -30,11 +38,19 @@ def get_connection():
                 raise
 
 def create_tables_if_not_exist(connection):
-    """Create the necessary tables if they don't exist."""
+    """
+    Create the necessary tables for sentiment analysis if they don't exist.
+
+    Args:
+        connection: Active MySQL connection
+
+    Raises:
+        Exception: If table creation fails
+    """
     try:
         cursor = connection.cursor()
 
-        # Create comments table
+        # Create comments table to store sentiment analysis results
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS comments (
             id VARCHAR(36) PRIMARY KEY,
@@ -55,15 +71,18 @@ def create_tables_if_not_exist(connection):
 
 def insert_sentiment_data(connection, comment_id, user_id, comment_text, timestamp, sentiment):
     """
-    Insert sentiment analysis data into MySQL.
+    Insert sentiment analysis data into MySQL for reporting and visualization.
 
     Args:
-        connection: MySQL connection
-        comment_id: Unique identifier for the comment
-        user_id: User identifier
-        comment_text: Comment text content
-        timestamp: Unix timestamp (milliseconds)
-        sentiment: Sentiment prediction label
+        connection: Active MySQL connection
+        comment_id (str): Unique identifier for the comment (matches HBase row key)
+        user_id (str): User identifier
+        comment_text (str): Original comment text content
+        timestamp (int): Unix timestamp in milliseconds
+        sentiment (str): Sentiment prediction label from the analysis
+
+    Raises:
+        Exception: If insert operation fails
     """
     try:
         cursor = connection.cursor()
