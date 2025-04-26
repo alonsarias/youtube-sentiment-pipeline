@@ -79,6 +79,7 @@ class AppConfig:
     """General application settings."""
     PRODUCER_MIN_DELAY = float(os.getenv('PRODUCER_MIN_DELAY', 0.5))
     PRODUCER_MAX_DELAY = float(os.getenv('PRODUCER_MAX_DELAY', 3.0))
+    COMMENTS_FILE_PATH = os.getenv('COMMENTS_FILE_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'comments.json'))
 
 # For backward compatibility, maintain the original constants at the module level
 # Kafka configuration

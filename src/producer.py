@@ -3,41 +3,50 @@ import json
 import time
 import random
 import uuid
+import os
+import sys
 from config import KafkaConfig, AppConfig, logger
 
-# Define comments as a flat list with mixed sentiments
-COMMENTS = [
-    # Very Negative
-    "I hate this!",
-    "This is awful",
-    "Terrible experience",
-    "Worst service ever",
-    "Completely disappointed",
-    # Negative
-    "Not great",
-    "Could be better",
-    "I'm not satisfied",
-    "Below expectations",
-    "Somewhat disappointing",
-    # Neutral
-    "It's okay",
-    "Average",
-    "No strong feelings",
-    "Neither good nor bad",
-    "Acceptable",
-    # Positive
-    "This is nice",
-    "I like it",
-    "Good work",
-    "Pleasant experience",
-    "Better than expected",
-    # Very Positive
-    "Absolutely love it!",
-    "Fantastic!",
-    "Best ever",
-    "Exceptional quality",
-    "Outstanding performance"
-]
+def load_comments(file_path):
+    """
+    Load comments from a JSON file.
+
+    Args:
+        file_path (str): Path to the JSON file containing comments
+
+    Returns:
+        list: A list of comment strings
+
+    Raises:
+        FileNotFoundError: If the comments file doesn't exist
+        json.JSONDecodeError: If the file isn't valid JSON
+        ValueError: If the file doesn't contain a list of strings
+    """
+    try:
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Comments file not found: {file_path}")
+
+        with open(file_path, 'r', encoding='utf-8') as file:
+            comments = json.load(file)
+
+        # Validate that comments is a list of strings
+        if not isinstance(comments, list):
+            raise ValueError("Comments file must contain a JSON array")
+
+        if not all(isinstance(comment, str) for comment in comments):
+            raise ValueError("All elements in the comments file must be strings")
+
+        if len(comments) == 0:
+            logger.warning("Comments file is empty. Producer will have no comments to send.")
+
+        return comments
+
+    except json.JSONDecodeError:
+        logger.error(f"Invalid JSON format in comments file: {file_path}")
+        raise
+    except Exception as e:
+        logger.error(f"Error loading comments: {str(e)}")
+        raise
 
 def create_producer():
     return KafkaProducer(
@@ -53,9 +62,9 @@ def send_message(producer, message):
     except Exception as e:
         logger.error(f"Error sending message: {e}")
 
-def generate_comment():
-    # Select a random comment from the flat list
-    comment = random.choice(COMMENTS)
+def generate_comment(comments):
+    # Select a random comment from the loaded list
+    comment = random.choice(comments)
     # Generate a random user ID
     user_id = f"user_{uuid.uuid4().hex[:8]}"
 
@@ -65,19 +74,31 @@ def generate_comment():
     }
 
 def main():
-    producer = create_producer()
     try:
-        logger.info(f"Starting producer... sending messages to topic: {KafkaConfig.TOPIC}")
-        while True:
-            message = generate_comment()
-            send_message(producer, message)
-            # Random delay between min and max delay
-            delay = random.uniform(AppConfig.PRODUCER_MIN_DELAY, AppConfig.PRODUCER_MAX_DELAY)
-            time.sleep(delay)
-    except KeyboardInterrupt:
-        logger.info("\nStopping producer...")
-    finally:
-        producer.close()
+        # Use the configurable path for the comments file
+        comments_file = AppConfig.COMMENTS_FILE_PATH
+        logger.info(f"Loading comments from: {comments_file}")
+
+        # Load comments from the JSON file
+        comments = load_comments(comments_file)
+        logger.info(f"Successfully loaded {len(comments)} comments from {comments_file}")
+
+        producer = create_producer()
+        try:
+            logger.info(f"Starting producer... sending messages to topic: {KafkaConfig.TOPIC}")
+            while True:
+                message = generate_comment(comments)
+                send_message(producer, message)
+                # Random delay between min and max delay
+                delay = random.uniform(AppConfig.PRODUCER_MIN_DELAY, AppConfig.PRODUCER_MAX_DELAY)
+                time.sleep(delay)
+        except KeyboardInterrupt:
+            logger.info("\nStopping producer...")
+        finally:
+            producer.close()
+    except Exception as e:
+        logger.error(f"Fatal error: {str(e)}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
