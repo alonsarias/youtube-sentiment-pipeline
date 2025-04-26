@@ -3,7 +3,7 @@ import json
 import time
 import random
 import uuid
-from config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_TOPIC
+from config import KafkaConfig, AppConfig, logger
 
 # Define comments as a flat list with mixed sentiments
 COMMENTS = [
@@ -41,17 +41,17 @@ COMMENTS = [
 
 def create_producer():
     return KafkaProducer(
-        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+        bootstrap_servers=KafkaConfig.BOOTSTRAP_SERVERS,
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
 
 def send_message(producer, message):
-    future = producer.send(KAFKA_TOPIC, message)
+    future = producer.send(KafkaConfig.TOPIC, message)
     try:
-        future.get(timeout=10)
-        print(f"Message sent successfully: {message}")
+        future.get(timeout=KafkaConfig.PRODUCER_TIMEOUT)
+        logger.info(f"Message sent successfully: {message}")
     except Exception as e:
-        print(f"Error sending message: {e}")
+        logger.error(f"Error sending message: {e}")
 
 def generate_comment():
     # Select a random comment from the flat list
@@ -67,15 +67,15 @@ def generate_comment():
 def main():
     producer = create_producer()
     try:
-        print(f"Starting producer... sending messages to topic: {KAFKA_TOPIC}")
+        logger.info(f"Starting producer... sending messages to topic: {KafkaConfig.TOPIC}")
         while True:
             message = generate_comment()
             send_message(producer, message)
-            # Random delay between 0.5 and 3.0 seconds
-            delay = random.uniform(0.5, 3.0)
+            # Random delay between min and max delay
+            delay = random.uniform(AppConfig.PRODUCER_MIN_DELAY, AppConfig.PRODUCER_MAX_DELAY)
             time.sleep(delay)
     except KeyboardInterrupt:
-        print("\nStopping producer...")
+        logger.info("\nStopping producer...")
     finally:
         producer.close()
 

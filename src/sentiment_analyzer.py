@@ -1,26 +1,25 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
+from config import SentimentConfig, logger
 
 class SentimentAnalyzer:
     """Class to perform sentiment analysis using a pre-trained model."""
 
-    def __init__(self, model_name="tabularisai/multilingual-sentiment-analysis"):
+    def __init__(self, model_name=None):
         """Initialize the sentiment analyzer with a pre-trained model.
 
         Args:
-            model_name (str): HuggingFace model name/path
+            model_name (str, optional): HuggingFace model name/path.
+                                      If None, use the value from config.
         """
-        print(f"Loading model: {model_name}")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
-        self.sentiment_map = {
-            0: "Very Negative",
-            1: "Negative",
-            2: "Neutral",
-            3: "Positive",
-            4: "Very Positive"
-        }
-        print("Sentiment analyzer initialized successfully")
+        # Use model name from config if not provided
+        self.model_name = model_name or SentimentConfig.MODEL_NAME
+        logger.info(f"Loading sentiment analysis model: {self.model_name}")
+
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
+        self.sentiment_map = SentimentConfig.SENTIMENT_MAP
+        logger.info("Sentiment analyzer initialized successfully")
 
     def predict_sentiment(self, texts):
         """Predict sentiment for a list of texts.
@@ -41,7 +40,7 @@ class SentimentAnalyzer:
             return_tensors="pt",
             truncation=True,
             padding=True,
-            max_length=512
+            max_length=SentimentConfig.MAX_LENGTH
         )
 
         # Perform inference
@@ -76,7 +75,7 @@ class SentimentAnalyzer:
             return_tensors="pt",
             truncation=True,
             padding=True,
-            max_length=512
+            max_length=SentimentConfig.MAX_LENGTH
         )
 
         # Perform inference

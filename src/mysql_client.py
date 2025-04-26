@@ -1,32 +1,32 @@
 import mysql.connector
 import time
 import datetime
-from config import MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
+from config import MySQLConfig, logger
 
 def get_connection():
     """Create and return a connection to MySQL."""
     # Add retry mechanism for Docker container startup timing
-    max_retries = 5
-    retry_delay = 5  # seconds
+    max_retries = MySQLConfig.MAX_RETRIES
+    retry_delay = MySQLConfig.RETRY_DELAY
 
     for i in range(max_retries):
         try:
             connection = mysql.connector.connect(
-                host=MYSQL_HOST,
-                port=MYSQL_PORT,
-                database=MYSQL_DATABASE,
-                user=MYSQL_USER,
-                password=MYSQL_PASSWORD,
-                auth_plugin='mysql_native_password'  # Added auth_plugin to fix RSA public key error
+                host=MySQLConfig.HOST,
+                port=MySQLConfig.PORT,
+                database=MySQLConfig.DATABASE,
+                user=MySQLConfig.USER,
+                password=MySQLConfig.PASSWORD,
+                auth_plugin=MySQLConfig.AUTH_PLUGIN
             )
-            print(f"Successfully connected to MySQL at {MYSQL_HOST}:{MYSQL_PORT}")
+            logger.info(f"Successfully connected to MySQL at {MySQLConfig.HOST}:{MySQLConfig.PORT}")
             return connection
         except Exception as e:
             if i < max_retries - 1:
-                print(f"Error connecting to MySQL. Retry {i+1} of {max_retries}. Error: {e}")
+                logger.warning(f"Error connecting to MySQL. Retry {i+1} of {max_retries}. Error: {e}")
                 time.sleep(retry_delay)
             else:
-                print(f"Failed to connect to MySQL after {max_retries} attempts: {e}")
+                logger.error(f"Failed to connect to MySQL after {max_retries} attempts: {e}")
                 raise
 
 def create_tables_if_not_exist(connection):
@@ -46,9 +46,9 @@ def create_tables_if_not_exist(connection):
         """)
 
         connection.commit()
-        print("MySQL tables created or already exist")
+        logger.info("MySQL tables created or already exist")
     except Exception as e:
-        print(f"Error creating MySQL tables: {e}")
+        logger.error(f"Error creating MySQL tables: {e}")
         raise
     finally:
         cursor.close()
@@ -79,9 +79,9 @@ def insert_sentiment_data(connection, comment_id, user_id, comment_text, timesta
         cursor.execute(query, (comment_id, user_id, comment_text, datetime_obj, sentiment))
         connection.commit()
 
-        print(f"Inserted sentiment data into MySQL: {comment_id}, sentiment: {sentiment}")
+        logger.info(f"Inserted sentiment data into MySQL: {comment_id}, sentiment: {sentiment}")
     except Exception as e:
-        print(f"Error inserting sentiment data into MySQL: {e}")
+        logger.error(f"Error inserting sentiment data into MySQL: {e}")
         connection.rollback()
         raise
     finally:
