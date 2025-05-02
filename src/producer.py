@@ -1,51 +1,60 @@
 from kafka import KafkaProducer
 import json
 import time
-import random
-import uuid
-import os
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 import sys
-from config import KafkaConfig, AppConfig, logger
+from config import KafkaConfig, YouTubeConfig, logger
 
-def load_comments(file_path):
+def create_youtube_client():
     """
-    Load comments from a JSON file.
-
-    Args:
-        file_path (str): Path to the JSON file containing comments
+    Create and return a YouTube API client.
 
     Returns:
-        list: A list of comment strings
-
-    Raises:
-        FileNotFoundError: If the comments file doesn't exist
-        json.JSONDecodeError: If the file contains invalid JSON
-        ValueError: If the file doesn't contain a list of strings
+        googleapiclient.discovery.Resource: YouTube API client
     """
     try:
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Comments file not found: {file_path}")
+        if not YouTubeConfig.API_KEY:
+            raise ValueError("YouTube API key not found in configuration")
 
-        with open(file_path, 'r', encoding='utf-8') as file:
-            comments = json.load(file)
-
-        # Validate that comments is a list of strings
-        if not isinstance(comments, list):
-            raise ValueError("Comments file must contain a JSON array")
-
-        if not all(isinstance(comment, str) for comment in comments):
-            raise ValueError("All elements in the comments file must be strings")
-
-        if len(comments) == 0:
-            logger.warning("Comments file is empty. Producer will have no comments to send.")
-
-        return comments
-
-    except json.JSONDecodeError:
-        logger.error(f"Invalid JSON format in comments file: {file_path}")
-        raise
+        youtube = build('youtube', 'v3', developerKey=YouTubeConfig.API_KEY)
+        logger.info("YouTube API client created successfully")
+        return youtube
     except Exception as e:
-        logger.error(f"Error loading comments: {str(e)}")
+        logger.error(f"Error creating YouTube client: {e}")
+        raise
+
+def get_live_chat_id(youtube, video_id):
+    """
+    Get the live chat ID for a given video.
+
+    Args:
+        youtube: YouTube API client
+        video_id (str): ID of the YouTube video
+
+    Returns:
+        str: Live chat ID if available
+    """
+    try:
+        video_response = youtube.videos().list(
+            part='liveStreamingDetails',
+            id=video_id
+        ).execute()
+
+        if not video_response['items']:
+            raise ValueError(f"Video {video_id} not found or is not live")
+
+        if 'liveStreamingDetails' not in video_response['items'][0]:
+            raise ValueError(f"Video {video_id} is not a live stream")
+
+        live_chat_id = video_response['items'][0]['liveStreamingDetails'].get('activeLiveChatId')
+        if not live_chat_id:
+            raise ValueError(f"No active live chat found for video {video_id}")
+
+        logger.info(f"Retrieved live chat ID: {live_chat_id}")
+        return live_chat_id
+    except Exception as e:
+        logger.error(f"Error getting live chat ID: {e}")
         raise
 
 def create_producer():
@@ -57,7 +66,8 @@ def create_producer():
     """
     return KafkaProducer(
         bootstrap_servers=KafkaConfig.BOOTSTRAP_SERVERS,
-        value_serializer=lambda v: json.dumps(v).encode('utf-8')
+        value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+        retries=3  # Add retries for better resilience
     )
 
 def send_message(producer, message):
@@ -70,59 +80,120 @@ def send_message(producer, message):
     """
     future = producer.send(KafkaConfig.TOPIC, message)
     try:
-        # Block until the message is sent or times out
         future.get(timeout=KafkaConfig.PRODUCER_TIMEOUT)
-        logger.info(f"Message sent successfully: {message}")
+        logger.debug(f"Message sent successfully: {message}")
     except Exception as e:
         logger.error(f"Error sending message: {e}")
+        raise  # Re-raise to handle in the calling function
 
-def generate_comment(comments):
+def process_chat_messages(youtube, live_chat_id, producer, next_page_token=None):
     """
-    Generate a comment with user information for simulating real-time data.
+    Retrieve and process live chat messages.
 
     Args:
-        comments (list): List of available comment strings
+        youtube: YouTube API client
+        live_chat_id (str): ID of the live chat
+        producer (KafkaProducer): Kafka producer instance
+        next_page_token (str, optional): Token for the next page of results
 
     Returns:
-        dict: Dictionary containing user_id and comment text
+        tuple: (next_page_token, messages_processed)
     """
-    # Select a random comment from the loaded list
-    comment = random.choice(comments)
-    # Generate a random user ID
-    user_id = f"user_{uuid.uuid4().hex[:8]}"
+    messages_processed = 0
+    try:
+        chat_response = youtube.liveChatMessages().list(
+            liveChatId=live_chat_id,
+            part='snippet,authorDetails',
+            maxResults=YouTubeConfig.MAX_RESULTS,
+            pageToken=next_page_token
+        ).execute()
 
-    return {
-        "user_id": user_id,
-        "comment": comment
-    }
+        for chat_message in chat_response['items']:
+            try:
+                # Extract required fields with safety checks
+                message_data = {
+                    'user_id': chat_message['authorDetails']['channelId'],
+                    'comment': chat_message['snippet']['displayMessage'],
+                    'timestamp': chat_message['snippet']['publishedAt']
+                }
+
+                # Only process non-empty messages
+                if message_data['comment'].strip():
+                    send_message(producer, message_data)
+                    messages_processed += 1
+
+            except KeyError as e:
+                logger.warning(f"Missing required field in chat message: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"Error processing individual message: {e}")
+                continue
+
+        return chat_response.get('nextPageToken'), messages_processed
+    except HttpError as e:
+        if e.resp.status in [403, 429]:  # Quota exceeded or rate limited
+            logger.error(f"YouTube API quota exceeded or rate limited: {e}")
+            time.sleep(YouTubeConfig.POLL_INTERVAL * 2)  # Wait longer before retry
+        raise
+    except Exception as e:
+        logger.error(f"Error processing chat messages: {e}")
+        return next_page_token, messages_processed
 
 def main():
-    """Main function to run the Kafka producer simulation."""
-    try:
-        # Use the configurable path for the comments file
-        comments_file = AppConfig.COMMENTS_FILE_PATH
-        logger.info(f"Loading comments from: {comments_file}")
-
-        # Load comments from the JSON file
-        comments = load_comments(comments_file)
-        logger.info(f"Successfully loaded {len(comments)} comments from {comments_file}")
-
-        producer = create_producer()
-        try:
-            logger.info(f"Starting producer... sending messages to topic: {KafkaConfig.TOPIC}")
-            while True:
-                message = generate_comment(comments)
-                send_message(producer, message)
-                # Random delay between min and max delay to simulate varying load
-                delay = random.uniform(AppConfig.PRODUCER_MIN_DELAY, AppConfig.PRODUCER_MAX_DELAY)
-                time.sleep(delay)
-        except KeyboardInterrupt:
-            logger.info("\nStopping producer...")
-        finally:
-            producer.close()
-    except Exception as e:
-        logger.error(f"Fatal error: {str(e)}")
+    """
+    Main function to process YouTube live chat messages.
+    """
+    if len(sys.argv) != 2:
+        print("Usage: python producer.py <youtube_video_id>")
         sys.exit(1)
+
+    video_id = sys.argv[1]
+    youtube = create_youtube_client()
+    producer = create_producer()
+    error_count = 0
+    max_errors = 5
+
+    try:
+        live_chat_id = get_live_chat_id(youtube, video_id)
+        next_page_token = None
+        logger.info(f"Starting to monitor live chat for video: {video_id}")
+
+        while True:
+            try:
+                next_page_token, messages_processed = process_chat_messages(
+                    youtube,
+                    live_chat_id,
+                    producer,
+                    next_page_token
+                )
+
+                if messages_processed > 0:
+                    logger.info(f"Processed {messages_processed} messages")
+                    error_count = 0  # Reset error count on successful processing
+
+                sleep_time = YouTubeConfig.POLL_INTERVAL
+                if not next_page_token:
+                    sleep_time *= 2  # Wait longer if no more messages
+
+                time.sleep(sleep_time)
+
+            except Exception as e:
+                error_count += 1
+                logger.error(f"Error in main loop (attempt {error_count}/{max_errors}): {e}")
+
+                if error_count >= max_errors:
+                    logger.error("Maximum error count reached, stopping producer")
+                    break
+
+                time.sleep(YouTubeConfig.POLL_INTERVAL * 2)  # Wait longer before retry
+
+    except KeyboardInterrupt:
+        logger.info("\nStopping producer...")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+    finally:
+        producer.close()
+        logger.info("Producer stopped and resources cleaned up.")
 
 if __name__ == "__main__":
     main()

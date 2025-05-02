@@ -75,6 +75,15 @@ class SentimentConfig:
     }
 
 # ------------------------------
+# YouTube Configuration
+# ------------------------------
+class YouTubeConfig:
+    """YouTube API and live chat configuration parameters."""
+    API_KEY = os.getenv('YOUTUBE_API_KEY')
+    POLL_INTERVAL = int(os.getenv('YOUTUBE_POLL_INTERVAL', 5))
+    MAX_RESULTS = int(os.getenv('YOUTUBE_MAX_RESULTS', 200))
+
+# ------------------------------
 # Application Settings
 # ------------------------------
 class AppConfig:
@@ -107,3 +116,4 @@ logger.info(f"Kafka Topic: {KAFKA_TOPIC}, Bootstrap Servers: {KAFKA_BOOTSTRAP_SE
 logger.info(f"HBase Host: {HBASE_HOST}, Port: {HBASE_PORT}, Table: {HBASE_TABLE_NAME}")
 logger.info(f"MySQL Host: {MYSQL_HOST}, Port: {MYSQL_PORT}, Database: {MYSQL_DATABASE}")
 logger.info(f"Sentiment Model: {SentimentConfig.MODEL_NAME}")
+logger.info(f"YouTube Poll Interval: {YouTubeConfig.POLL_INTERVAL}s")

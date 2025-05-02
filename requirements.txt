@@ -4,3 +4,4 @@ happybase
 torch
 transformers
 mysql-connector-python
+google-api-python-client
