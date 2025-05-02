@@ -73,16 +73,25 @@ def insert_sentiment_data(connection, comment_id, user_id, comment_text, timesta
     """
     Insert sentiment analysis data into MySQL for reporting and visualization.
 
+    This function handles the persistence of analyzed comments, ensuring proper
+    timestamp conversion and transaction management. Failed inserts trigger
+    a rollback to maintain data consistency.
+
     Args:
-        connection: Active MySQL connection
-        comment_id (str): Unique identifier for the comment (matches HBase row key)
-        user_id (str): User identifier
-        comment_text (str): Original comment text content
+        connection: Active MySQL connection with autocommit disabled
+        comment_id (str): Unique identifier (matches HBase row key)
+        user_id (str): User identifier from the source
+        comment_text (str): Original comment content
         timestamp (int): Unix timestamp in milliseconds
-        sentiment (str): Sentiment prediction label from the analysis
+        sentiment (str): Sentiment prediction from analysis
 
     Raises:
-        Exception: If insert operation fails
+        Exception: If insert operation fails, triggering transaction rollback
+
+    Note:
+        The function converts Unix timestamps to MySQL DATETIME format
+        automatically. The connection's transaction is committed on success
+        and rolled back on failure.
     """
     try:
         cursor = connection.cursor()

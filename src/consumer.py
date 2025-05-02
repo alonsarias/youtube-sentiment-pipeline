@@ -9,7 +9,12 @@ from sentiment_processor import SentimentProcessor
 
 def create_consumer():
     """
-    Create and configure a Kafka consumer.
+    Create and configure a Kafka consumer with resilient settings.
+
+    The consumer is configured to:
+    - Start from earliest messages if no offset is found
+    - Group messages for balanced consumption in a distributed setup
+    - Automatically deserialize JSON messages
 
     Returns:
         KafkaConsumer: Configured Kafka consumer instance
@@ -24,10 +29,24 @@ def create_consumer():
 
 def main():
     """
-    Main function that initializes components and processes messages from Kafka.
+    Main consumer loop orchestrating the sentiment analysis pipeline.
 
-    This function establishes connections to databases, sets up the sentiment
-    processor, and consumes messages from Kafka for sentiment analysis.
+    Flow:
+    1. Initialize connections to HBase (raw storage) and MySQL (analyzed data)
+    2. Set up sentiment analysis processor
+    3. Continuously consume messages from Kafka
+    4. For each message:
+       - Store raw data in HBase for durability
+       - Perform sentiment analysis
+       - Save results to MySQL for visualization
+    5. Handle errors gracefully and ensure resource cleanup
+
+    The consumer maintains separate storage for raw and processed data to enable
+    reprocessing if needed and to optimize for different query patterns.
+    Error handling includes:
+    - Connection retry mechanisms for both databases
+    - Graceful shutdown on keyboard interrupt
+    - Resource cleanup in case of failures
     """
     # Set up HBase connection
     logger.info("Initializing HBase connection...")

@@ -88,16 +88,21 @@ def send_message(producer, message):
 
 def process_chat_messages(youtube, live_chat_id, producer, next_page_token=None):
     """
-    Retrieve and process live chat messages.
+    Retrieve and process live chat messages from YouTube with rate limiting handling.
+
+    This function fetches messages in batches, processes them, and handles YouTube API
+    quota limitations gracefully. It automatically backs off when rate limits are hit.
 
     Args:
         youtube: YouTube API client
         live_chat_id (str): ID of the live chat
         producer (KafkaProducer): Kafka producer instance
-        next_page_token (str, optional): Token for the next page of results
+        next_page_token (str, optional): Token for pagination of chat messages
 
     Returns:
         tuple: (next_page_token, messages_processed)
+            - next_page_token: Token for the next page of results, None if no more pages
+            - messages_processed: Number of messages successfully processed in this batch
     """
     messages_processed = 0
     try:

@@ -4,19 +4,26 @@ from config import SentimentConfig, logger
 
 class SentimentAnalyzer:
     """
-    Performs sentiment analysis using a pre-trained transformer model.
+    Performs multilingual sentiment analysis using a pre-trained transformer model.
 
-    This class encapsulates the loading and inference functionality for sentiment
-    analysis using HuggingFace's Transformers library.
+    This class encapsulates the HuggingFace Transformers pipeline for sentiment analysis,
+    providing methods for both single and batch text processing. The model supports
+    five sentiment categories: Very Negative, Negative, Neutral, Positive, Very Positive.
+
+    The analyzer handles text preprocessing, model inference, and result mapping
+    transparently, making it easy to integrate into larger processing pipelines.
     """
 
     def __init__(self, model_name=None):
         """
         Initialize the sentiment analyzer with a pre-trained model.
 
+        The model is loaded once during initialization and kept in memory
+        for efficient processing of subsequent requests.
+
         Args:
             model_name (str, optional): HuggingFace model identifier.
-                Defaults to value from SentimentConfig.
+                Defaults to model specified in SentimentConfig.
         """
         self.model_name = model_name or SentimentConfig.MODEL_NAME
         logger.info(f"Loading sentiment analysis model: {self.model_name}")
@@ -30,6 +37,9 @@ class SentimentAnalyzer:
     def predict_sentiment(self, texts):
         """
         Predict sentiment for text input(s).
+
+        This method processes single or batch text inputs, tokenizes them,
+        performs model inference, and maps the results to sentiment labels.
 
         Args:
             texts (str or list): Single text or list of texts to analyze
@@ -66,6 +76,10 @@ class SentimentAnalyzer:
     def predict_sentiment_with_scores(self, texts):
         """
         Predict sentiment with confidence scores for text input(s).
+
+        This method processes single or batch text inputs, tokenizes them,
+        performs model inference, and maps the results to sentiment labels
+        along with their confidence scores.
 
         Args:
             texts (str or list): Single text or list of texts to analyze

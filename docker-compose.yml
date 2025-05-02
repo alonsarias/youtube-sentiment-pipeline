@@ -2,7 +2,10 @@ version: '3'
 services:
   # ----------------------------------------
   # Apache ZooKeeper
-  # Distributed coordination service used by Kafka and HBase
+  # Core distributed coordination service that:
+  # - Manages Kafka broker coordination
+  # - Provides distributed configuration for HBase
+  # - Handles leader election and cluster state
   # ----------------------------------------
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -16,7 +19,10 @@ services:
 
   # ----------------------------------------
   # Apache Kafka
-  # Distributed event streaming platform for real-time data pipelines
+  # Distributed streaming platform that:
+  # - Uses dual listener setup for internal/external access
+  # - Configured for single-node development with replication factor 1
+  # - Optimized for M1/Apple Silicon through ARM64 image
   # ----------------------------------------
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -38,7 +44,10 @@ services:
 
   # ----------------------------------------
   # Apache HBase
-  # Distributed NoSQL database for storing raw comments data
+  # Distributed NoSQL database that:
+  # - Stores raw comment data for durability
+  # - Uses external ZooKeeper for cluster management
+  # - Runs on x86 via emulation (acceptable for development)
   # ----------------------------------------
   hbase:
     image: harisekhon/hbase:1.4
@@ -61,7 +70,10 @@ services:
 
   # ----------------------------------------
   # MySQL
-  # Relational database for storing processed sentiment analysis results
+  # Relational database optimized for:
+  # - Storing processed sentiment results
+  # - Supporting Metabase visualizations
+  # - Native ARM64 performance on Apple Silicon
   # ----------------------------------------
   mysql:
     image: arm64v8/mysql:8.0
@@ -82,7 +94,12 @@ services:
 
   # ----------------------------------------
   # Metabase
-  # Data visualization and dashboarding platform for sentiment analysis results
+  # Analytics platform providing:
+  # - Real-time sentiment analysis dashboards
+  # - Custom SQL queries for data exploration
+  # - Shareable visualizations and reports
+  # Note: Runs via emulation on ARM64 but maintains
+  # acceptable performance for visualization tasks
   # ----------------------------------------
   metabase:
     image: metabase/metabase:latest

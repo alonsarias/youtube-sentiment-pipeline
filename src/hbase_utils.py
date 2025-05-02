@@ -50,12 +50,20 @@ def create_table_if_not_exists(connection):
 
 def store_comment(connection, row_key, data):
     """
-    Store a comment in HBase table.
+    Store a comment in HBase with proper byte encoding.
+
+    HBase requires all values to be stored as bytes. This function handles the
+    encoding process transparently, converting all string data to UTF-8 bytes
+    before storage.
 
     Args:
         connection (happybase.Connection): Active HBase connection
-        row_key (str): Unique identifier for the row
+        row_key (str): Unique identifier for the row (will be encoded to bytes)
         data (dict): Dictionary containing at minimum 'user_id' and 'comment' keys
+
+    Note:
+        The 'processed' flag is set to False by default, allowing the sentiment
+        analyzer to track which comments need processing.
     """
     table = connection.table(HBaseConfig.TABLE_NAME)
 
@@ -90,14 +98,18 @@ def update_comment_with_sentiment(connection, row_key, sentiment):
 
 def get_comment(connection, row_key):
     """
-    Retrieve a comment from HBase table.
+    Retrieve and decode a comment from HBase.
+
+    This function handles the byte decoding process transparently, converting
+    the stored bytes back into Python strings for easy manipulation.
 
     Args:
         connection (happybase.Connection): Active HBase connection
-        row_key (str): Unique identifier for the row
+        row_key (str): Unique identifier for the row (will be encoded to bytes)
 
     Returns:
         dict: Dictionary containing the comment data with decoded string values
+              Keys will be the column names without the family prefix
     """
     table = connection.table(HBaseConfig.TABLE_NAME)
 

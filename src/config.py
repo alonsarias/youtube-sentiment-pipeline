@@ -1,9 +1,22 @@
 """
 Configuration module for the Sentiment Analysis Big Data Simulation.
 
-This module loads configuration from environment variables and provides
-structured access to all configurable parameters used throughout the application.
-Default values are provided when environment variables are not set.
+This module provides a structured configuration system that:
+1. Loads settings from environment variables with sensible defaults
+2. Groups related settings into logical configuration classes
+3. Maintains backward compatibility through module-level constants
+4. Validates and logs the configuration on startup
+
+Configuration is organized into components:
+- Kafka: Message broker settings for data ingestion
+- HBase: NoSQL storage for raw comment data
+- MySQL: Relational storage for analyzed results
+- Sentiment Analysis: Model and processing parameters
+- YouTube: API and polling configuration
+- Application: General settings and paths
+
+Environment variables can override any default value. See .env.example
+for a complete list of configurable parameters.
 """
 from dotenv import load_dotenv
 import os
@@ -25,7 +38,17 @@ logger.info("Loading configuration...")
 # Kafka Configuration
 # ------------------------------
 class KafkaConfig:
-    """Kafka connection and operational parameters."""
+    """
+    Kafka connection and operational parameters.
+
+    Settings for message broker connectivity and behavior:
+    - BOOTSTRAP_SERVERS: List of Kafka brokers for initial connection
+    - TOPIC: Topic name for streaming YouTube comments
+    - CONSUMER_GROUP_ID: Group ID for balanced message consumption
+    - AUTO_OFFSET_RESET: Strategy for handling missing offsets
+    - PRODUCER_TIMEOUT: Max seconds to wait for message acknowledgment
+    """
+
     BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
     TOPIC = os.getenv('KAFKA_TOPIC', 'comments')
     CONSUMER_GROUP_ID = os.getenv('KAFKA_CONSUMER_GROUP_ID', 'example-consumer-group')
@@ -36,7 +59,16 @@ class KafkaConfig:
 # HBase Configuration
 # ------------------------------
 class HBaseConfig:
-    """HBase connection and table parameters."""
+    """
+    HBase connection and table parameters.
+
+    Settings for NoSQL storage of raw comments:
+    - HOST/PORT: Connection details for the Thrift interface
+    - TABLE_NAME: Name of the table storing comments
+    - COLUMN_FAMILY: HBase column family for comment data
+    - MAX_RETRIES/RETRY_DELAY: Resilience parameters for connection issues
+    """
+
     HOST = os.getenv('HBASE_HOST', 'localhost')
     PORT = int(os.getenv('HBASE_PORT', 9090))
     TABLE_NAME = os.getenv('HBASE_TABLE_NAME', 'comments')
@@ -48,7 +80,16 @@ class HBaseConfig:
 # MySQL Configuration
 # ------------------------------
 class MySQLConfig:
-    """MySQL database connection and operational parameters."""
+    """
+    MySQL database connection and operational parameters.
+
+    Settings for relational storage of analyzed results:
+    - HOST/PORT/DATABASE: Connection details
+    - USER/PASSWORD: Authentication credentials
+    - AUTH_PLUGIN: Authentication method (configured for MySQL 8+)
+    - MAX_RETRIES/RETRY_DELAY: Resilience parameters for startup timing
+    """
+
     HOST = os.getenv('MYSQL_HOST', 'localhost')
     PORT = int(os.getenv('MYSQL_PORT', 3306))
     DATABASE = os.getenv('MYSQL_DATABASE', 'sentiment_analysis')
@@ -62,7 +103,16 @@ class MySQLConfig:
 # Sentiment Analysis Configuration
 # ------------------------------
 class SentimentConfig:
-    """Configuration for sentiment analysis model and processing."""
+    """
+    Configuration for sentiment analysis model and processing.
+
+    Parameters controlling the sentiment analysis pipeline:
+    - MODEL_NAME: HuggingFace model ID for sentiment classification
+    - MAX_LENGTH: Maximum token length for text input
+    - SENTIMENT_MAP: Maps model output integers to human-readable labels,
+      supporting five sentiment categories from Very Negative to Very Positive
+    """
+
     MODEL_NAME = os.getenv('SENTIMENT_MODEL_NAME', 'tabularisai/multilingual-sentiment-analysis')
     MAX_LENGTH = int(os.getenv('SENTIMENT_MAX_LENGTH', 512))
     # Map model outputs (integers) to human-readable sentiment labels
@@ -78,7 +128,17 @@ class SentimentConfig:
 # YouTube Configuration
 # ------------------------------
 class YouTubeConfig:
-    """YouTube API and live chat configuration parameters."""
+    """
+    YouTube API and live chat configuration parameters.
+
+    Settings for YouTube Data API interaction:
+    - API_KEY: Authentication key for YouTube API access
+    - POLL_INTERVAL: Seconds between live chat message fetches
+    - MAX_RESULTS: Maximum messages to retrieve per request
+
+    Note: API_KEY must be set in environment for the producer to function
+    """
+
     API_KEY = os.getenv('YOUTUBE_API_KEY')
     POLL_INTERVAL = int(os.getenv('YOUTUBE_POLL_INTERVAL', 5))
     MAX_RESULTS = int(os.getenv('YOUTUBE_MAX_RESULTS', 200))
@@ -87,7 +147,16 @@ class YouTubeConfig:
 # Application Settings
 # ------------------------------
 class AppConfig:
-    """General application settings."""
+    """
+    General application settings.
+
+    Global configuration parameters:
+    - PRODUCER_MIN/MAX_DELAY: Controls message production pacing
+    - COMMENTS_FILE_PATH: Location of sample comments for testing
+
+    Note: Paths are constructed relative to the project root
+    """
+
     PRODUCER_MIN_DELAY = float(os.getenv('PRODUCER_MIN_DELAY', 0.5))
     PRODUCER_MAX_DELAY = float(os.getenv('PRODUCER_MAX_DELAY', 3.0))
     # Construct absolute path to comments file based on project structure
