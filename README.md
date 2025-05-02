@@ -1,6 +1,6 @@
-# Sentiment Analysis Big Data Simulation
+# Real-Time YouTube Sentiment Analysis Pipeline
 
-A comprehensive big data pipeline for real-time sentiment analysis of user comments, combining Apache Kafka, Apache HBase, MySQL, and Metabase.
+A comprehensive big data pipeline for real-time sentiment analysis of YouTube live chat messages, combining Apache Kafka, Apache HBase, MySQL, and Metabase.
 
 ## Table of Contents
 
@@ -22,9 +22,9 @@ A comprehensive big data pipeline for real-time sentiment analysis of user comme
 
 ## Project Overview
 
-This project implements a sophisticated big data pipeline for real-time sentiment analysis of user comments. It demonstrates key concepts in distributed systems, data streaming, storage, and analytics.
+This project implements a sophisticated big data pipeline for real-time sentiment analysis of YouTube live chat messages. It demonstrates key concepts in distributed systems, data streaming, storage, and analytics.
 
-The system simulates a high-volume comment stream (like those found in social media platforms), processes each comment through sentiment analysis, and makes the results available for real-time monitoring and visualization.
+The system captures comments from YouTube live streams in real-time, processes each message through sentiment analysis, and makes the results available for real-time monitoring and visualization, allowing content creators and moderators to understand audience sentiment during live events.
 
 ## System Architecture
 
@@ -35,7 +35,7 @@ The project follows a modular microservices architecture:
 
 **Data Flow:**
 
-1. **Producer**: Simulates users posting comments by reading from a dataset and sending to Kafka
+1. **Producer**: Streams real-time comments from YouTube live chats using the YouTube Data API
 2. **Kafka**: Streams the comments to consumers in real-time
 3. **Consumer**: Processes incoming streams and coordinates with other components
 4. **Sentiment Analysis**: Analyzes comment sentiment using a pre-trained transformer model
@@ -241,19 +241,33 @@ SELECT sentiment, COUNT(*) FROM sentiment_results GROUP BY sentiment;
 
 #### 1. Producer (`producer.py`)
 
-**Purpose:** Simulates users posting comments by sending messages to Kafka.
+**Purpose:** Streams YouTube live chat messages to Kafka for real-time sentiment analysis.
 
-**Implementation:** Reads comments from a JSON file and sends them to Kafka at random intervals.
+**Implementation:** Connects to the YouTube Data API to retrieve live chat messages from ongoing streams and sends them to Kafka for processing.
 
 **Configuration:**
-- Comment source: `data/comments.json`
-- Delay between messages: 0.5-3 seconds (configurable)
+- Requires a YouTube API key in `.env` file
+- Configurable poll interval (default: 5 seconds)
+- Rate limiting and error handling for the YouTube API
+
+**YouTube API Configuration:**
+To use the Producer with YouTube live chats, you need to:
+1. Obtain a YouTube Data API v3 key from the [Google Cloud Console](https://console.cloud.google.com)
+2. Add the key to your `.env` file as `YOUTUBE_API_KEY=your_key_here`
+3. Configure poll intervals with `YOUTUBE_POLL_INTERVAL` (seconds, default: 5)
+4. Set maximum results per request with `YOUTUBE_MAX_RESULTS` (default: 200)
 
 **Running the Producer:**
 
 ```bash
-python src/producer.py
+# Specify a YouTube video ID as command line argument
+python src/producer.py <youtube_video_id>
 ```
+
+**Key Features:**
+- Real-time processing of live chat messages
+- Intelligent handling of YouTube API quota limitations
+- Automatic retry mechanisms for resilient operation
 
 #### 2. Consumer (`consumer.py`)
 
@@ -294,24 +308,23 @@ python src/consumer.py
 ```
 sentiment-analysis-big-data-simulation/
 ├── docker-compose.yml        # Docker services configuration
-├── README.md                 # Project documentation
 ├── requirements.txt          # Python dependencies
 ├── .env                      # Environment variables configuration
-├── data/
-│   └── comments.json         # Sample comment data for producer
+├── README.md                 # Project documentation
+├── LICENSE                   # MIT License file
+└── src/
+│   ├── config.py             # Centralized configuration
+│   ├── consumer.py           # Kafka consumer and orchestration
+│   ├── hbase_utils.py        # HBase database utilities
+│   ├── mysql_client.py       # MySQL database utilities
+│   ├── producer.py           # Streams YouTube live chat messages to Kafka using the YouTube Data API
+│   ├── sentiment_analyzer.py # ML-based sentiment analysis
+│   └── sentiment_processor.py # Sentiment processing orchestration
 ├── images/                   # Visualization and diagram assets
+│   ├── system_architecture.png        # System architecture diagram
 │   ├── bar_chart_visualization.png    # Bar chart of sentiment distribution
 │   ├── pie_chart_visualization.png    # Pie chart of sentiment percentages
-│   ├── system_architecture.png        # System architecture diagram
 │   └── time_series_visualization.png  # Time series of sentiment trends
-└── src/
-    ├── config.py             # Centralized configuration
-    ├── consumer.py           # Kafka consumer and orchestration
-    ├── hbase_utils.py        # HBase database utilities
-    ├── mysql_client.py       # MySQL database utilities
-    ├── producer.py           # Kafka producer simulation
-    ├── sentiment_analyzer.py # ML-based sentiment analysis
-    └── sentiment_processor.py # Sentiment processing orchestration
 ```
 
 ### Directory Structure Explanation
@@ -321,19 +334,11 @@ sentiment-analysis-big-data-simulation/
   - `requirements.txt`: Lists Python dependencies needed for the application components
   - `.env`: Environment variables configuration file for all services and components
   - `README.md`: Project documentation with setup instructions and component explanations
-
-- **data/**: Contains input data files
-  - `comments.json`: Sample comment dataset used by the producer to simulate user comments
-
-- **images/**: Contains visualization assets and diagrams
-  - `system_architecture.png`: High-level system architecture diagram
-  - `time_series_visualization.png`: Example of time series sentiment analysis chart
-  - `bar_chart_visualization.png`: Example of sentiment distribution bar chart
-  - `pie_chart_visualization.png`: Example of sentiment distribution pie chart
+  - `LICENSE`: MIT License file
 
 - **src/**: Contains all application source code, organized by component function
   - **Data Pipeline**:
-    - `producer.py`: Simulates generating comment data and sending to Kafka
+    - `producer.py`: Streams YouTube live chat messages to Kafka using the YouTube Data API
     - `consumer.py`: Consumes comment data from Kafka and coordinates processing
 
   - **Data Processing**:
@@ -346,6 +351,12 @@ sentiment-analysis-big-data-simulation/
 
   - **Configuration**:
     - `config.py`: Centralizes configuration for all components via environment variables
+
+- **images/**: Contains visualization assets and diagrams
+  - `system_architecture.png`: High-level system architecture diagram
+  - `time_series_visualization.png`: Example of time series sentiment analysis chart
+  - `bar_chart_visualization.png`: Example of sentiment distribution bar chart
+  - `pie_chart_visualization.png`: Example of sentiment distribution pie chart
 
 The project follows a modular architecture with clear separation of concerns between data ingestion, processing, and storage components. This structure makes it easy to understand the data flow and modify individual components as needed.
 
@@ -371,7 +382,7 @@ python src/consumer.py
 
 ```bash
 # In another terminal
-python src/producer.py
+python src/producer.py <youtube_video_id>
 ```
 
 ### Step 4: Monitor and Visualize
