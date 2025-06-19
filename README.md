@@ -56,8 +56,8 @@ The project follows a modular microservices architecture:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/alonsarias/sentiment-analysis-big-data-simulation.git
-cd sentiment-analysis-big-data-simulation
+git clone https://github.com/alonsarias/youtube-sentiment-pipeline.git
+cd youtube-sentiment-pipeline
 ```
 
 ### 2. Install Python Dependencies
@@ -306,7 +306,7 @@ python src/consumer.py
 ## Project Structure
 
 ```
-sentiment-analysis-big-data-simulation/
+youtube-sentiment-pipeline/
 ├── docker-compose.yml        # Docker services configuration
 ├── requirements.txt          # Python dependencies
 ├── .env                      # Environment variables configuration
