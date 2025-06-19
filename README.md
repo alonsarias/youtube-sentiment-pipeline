@@ -403,7 +403,7 @@ This visualization shows how sentiment trends change over time.
 *Figure 2: Time series showing sentiment trends over time. Peaks in positive sentiment correlate with product launches and promotional events.*
 
 1. In Metabase, click on "New" > "Question"
-2. In the top navigation, select your database (e.g., "Sentiment Analysis Big Data Simulation")
+2. In the top navigation, select your database (e.g., "Sentiment Analysis")
 3. Click on "Comments" table
 4. Click on the "Summarize" button
 5. For "Pick a function or metric", select "Count of rows"
@@ -424,7 +424,7 @@ This visualization shows the count of comments in each sentiment category.
 *Figure 3: Bar chart showing the distribution of sentiment categories. This sample shows a healthy distribution across the five sentiment levels from Very Negative to Very Positive.*
 
 1. In Metabase, click on "New" > "Question"
-2. In the top navigation, select your database (e.g., "Sentiment Analysis Big Data Simulation")
+2. In the top navigation, select your database (e.g., "Sentiment Analysis")
 3. Click on "Comments" table
 4. Click on the "Summarize" button
 5. For "Pick a function or metric", select "Count of rows"
@@ -442,7 +442,7 @@ This visualization shows the proportion of each sentiment category as a percenta
 *Figure 4: Pie chart showing the percentage distribution of the five sentiment categories (Very Negative, Negative, Neutral, Positive, Very Positive), providing a quick overview of overall customer sentiment.*
 
 1. In Metabase, click on "New" > "Question"
-2. In the top navigation, select your database (e.g., "Sentiment Analysis Big Data Simulation")
+2. In the top navigation, select your database (e.g., "Sentiment Analysis")
 3. Click on "Comments" table
 4. Click on the "Summarize" button
 5. For "Pick a function or metric", select "Count of rows"
